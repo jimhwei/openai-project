@@ -7,8 +7,10 @@ service_id = 'openai-arcgis!'
 password = keyring.get_password(service_id, 'howe2021') # retrieve password
 openai_key = keyring.get_password(service_id, 'openai-key') 
 agol_item = 'b1e6dfffe2cc4de0bf7cc0f02e861e28'
-prompt = 'Interpret the following CSV file and tell me some insights: '
+default_prompt = 'Interpret the following CSV file and tell me some insights: '
+prompt_string = input('What would you like to know about your dataset? Default is to interpret an HFL: ')
 
+# Python API
 gis = GIS("https://howe2021.maps.arcgis.com/", "howe2021", password)
 hfl = gis.content.get(agol_item)
 
@@ -22,15 +24,22 @@ data = str(feature_list)
 ## OpenAI API Calls
 openai.api_key = openai_key
 
-response = openai.Completion.create(
-  model="text-davinci-003",
-  prompt=f"{prompt} \n{data}",
-  temperature=0.2,
-  max_tokens=2049,
-  top_p=1.0,
-  frequency_penalty=0.0,
-  presence_penalty=0.0
-)
+def chatgpt_request(input_string, dataset):
+  if input_string == '':
+    input_string = default_prompt
+    
+  response = openai.Completion.create(
+    model="text-davinci-003",
+    prompt=f"{input_string} \n{dataset}",
+    temperature=0.2,
+    max_tokens=2049,
+    top_p=1.0,
+    frequency_penalty=0.0,
+    presence_penalty=0.0
+  )
 
-text_output = response.choices[0].text
-print(text_output)
+  text_output = response.choices[0].text
+  return text_output
+
+output = chatgpt_request(prompt_string, data)
+print(output)
